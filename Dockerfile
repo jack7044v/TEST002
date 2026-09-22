@@ -1,4 +1,4 @@
-# Stage 1: Gateway Builder (Go 1.24 Native H2C Engine)
+# Stage 1: Gateway Builder
 FROM golang:1.24-alpine AS builder
 WORKDIR /build
 COPY main.go .
