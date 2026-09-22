@@ -71,8 +71,8 @@ func newLoopbackTransport() *http.Transport {
 	return &http.Transport{
 		Proxy:                 nil,
 		DialContext:           dialer.DialContext,
-		MaxIdleConns:          64,
-		MaxIdleConnsPerHost:   32,
+		MaxIdleConns:          128,
+		MaxIdleConnsPerHost:   64,
 		MaxConnsPerHost:       256,
 		IdleConnTimeout:       90 * time.Second,
 		ResponseHeaderTimeout: 0,
@@ -97,7 +97,7 @@ func attachReverseProxy(backend *url.URL, name string) *httputil.ReverseProxy {
 		}
 		resp.Header.Set("X-Accel-Buffering", "no")
 		resp.Header.Set("Cache-Control", "no-store")
-		resp.Header.Del("Content-Length") // بازگرداندن این خط حیاتی برای کارکرد استریم XHTTP
+		resp.Header.Del("Content-Length")
 		return nil
 	}
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
