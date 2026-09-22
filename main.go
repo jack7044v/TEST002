@@ -60,7 +60,7 @@ func setTCPNoDelay(fd uintptr) {
 	_ = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_TCP, syscall.TCP_NODELAY, 1)
 }
 
-func newLoopbackTransport(h2c bool) *http.Transport {
+func newLoopbackTransport() *http.Transport {
 	dialer := &net.Dialer{
 		Timeout:   3 * time.Second,
 		KeepAlive: 30 * time.Second,
@@ -68,7 +68,7 @@ func newLoopbackTransport(h2c bool) *http.Transport {
 			return c.Control(setTCPNoDelay)
 		},
 	}
-	tr := &http.Transport{
+	return &http.Transport{
 		Proxy:                 nil,
 		DialContext:           dialer.DialContext,
 		MaxIdleConns:          64,
@@ -84,18 +84,11 @@ func newLoopbackTransport(h2c bool) *http.Transport {
 		WriteBufferSize:       bufSize,
 		ReadBufferSize:        bufSize,
 	}
-	p := new(http.Protocols)
-	p.SetHTTP1(true)
-	if h2c {
-		p.SetUnencryptedHTTP2(true)
-	}
-	tr.Protocols = p
-	return tr
 }
 
-func attachReverseProxy(backend *url.URL, name string, h2c bool) *httputil.ReverseProxy {
+func attachReverseProxy(backend *url.URL, name string) *httputil.ReverseProxy {
 	proxy := httputil.NewSingleHostReverseProxy(backend)
-	proxy.Transport = newLoopbackTransport(h2c)
+	proxy.Transport = newLoopbackTransport()
 	proxy.BufferPool = proxyBufferPool
 	proxy.FlushInterval = -1
 	proxy.ModifyResponse = func(resp *http.Response) error {
@@ -104,6 +97,7 @@ func attachReverseProxy(backend *url.URL, name string, h2c bool) *httputil.Rever
 		}
 		resp.Header.Set("X-Accel-Buffering", "no")
 		resp.Header.Set("Cache-Control", "no-store")
+		resp.Header.Del("Content-Length") // بازگرداندن این خط حیاتی برای کارکرد استریم XHTTP
 		return nil
 	}
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -268,8 +262,8 @@ func main() {
 
 	wsBackend, _ := url.Parse("http://127.0.0.1:8081")
 	xhBackend, _ := url.Parse("http://127.0.0.1:8082")
-	wsProxy := attachReverseProxy(wsBackend, "WS", false)
-	xhProxy := attachReverseProxy(xhBackend, "XHTTP", true)
+	wsProxy := attachReverseProxy(wsBackend, "WS")
+	xhProxy := attachReverseProxy(xhBackend, "XHTTP")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqPath := r.URL.Path
@@ -288,10 +282,6 @@ func main() {
 		http.NotFound(w, r)
 	})
 
-	protos := new(http.Protocols)
-	protos.SetHTTP1(true)
-	protos.SetUnencryptedHTTP2(true)
-
 	server := &http.Server{
 		Addr:              "0.0.0.0:" + port,
 		Handler:           handler,
@@ -300,7 +290,6 @@ func main() {
 		WriteTimeout:      0,
 		IdleTimeout:       300 * time.Second,
 		MaxHeaderBytes:    64 * 1024,
-		Protocols:         protos,
 	}
 
 	go func() {
