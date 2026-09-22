@@ -17,18 +17,11 @@
   "policy": {
     "levels": {
       "0": {
-        "handshake": 8,
-        "connIdle": 180,
+        "handshake": 4,
+        "connIdle": 300,
         "uplinkOnly": 2,
         "downlinkOnly": 4,
-        "bufferSize": 128
-      },
-      "1": {
-        "handshake": 8,
-        "connIdle": 180,
-        "uplinkOnly": 2,
-        "downlinkOnly": 4,
-        "bufferSize": 256
+        "bufferSize": 512
       }
     },
     "system": {
@@ -53,7 +46,7 @@
           },
           {
             "id": "e7f2b1c4-9a3d-4c5e-8b6f-7123d4e5f602",
-            "level": 1,
+            "level": 0,
             "email": "ai@cazar"
           }
         ],
@@ -92,7 +85,7 @@
           },
           {
             "id": "e7f2b1c4-9a3d-4c5e-8b6f-7123d4e5f602",
-            "level": 1,
+            "level": 0,
             "email": "ai@cazar"
           }
         ],
@@ -104,7 +97,7 @@
         "xhttpSettings": {
           "path": "/xh-cazar-gate",
           "mode": "auto",
-          "xPaddingBytes": "200-1200",
+          "xPaddingBytes": "100-1100",
           "noSSEHeader": false,
           "scMaxEachPostBytes": 1000000,
           "scMaxBufferedPosts": 48,
@@ -114,7 +107,7 @@
             "maxConnections": 0,
             "cMaxReuseTimes": "300-600",
             "hMaxRequestTimes": "1000-2000",
-            "hMaxReusableSecs": "300-900",
+            "hMaxReusableSecs": "600-1200",
             "hKeepAlivePeriod": 20
           }
         },
@@ -135,10 +128,11 @@
     {
       "tag": "direct-normal",
       "protocol": "freedom",
-      "settings": {},
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      },
       "streamSettings": {
         "sockopt": {
-          "domainStrategy": "UseIPv4",
           "tcpFastOpen": true,
           "tcpcongestion": "bbr",
           "tcpNoDelay": true,
@@ -151,16 +145,11 @@
     {
       "tag": "direct-ai",
       "protocol": "freedom",
-      "settings": {},
+      "settings": {
+        "domainStrategy": "UseIPv6v4"
+      },
       "streamSettings": {
         "sockopt": {
-          "domainStrategy": "UseIP",
-          "happyEyeballs": {
-            "tryDelayMs": 250,
-            "prioritizeIPv6": true,
-            "interleave": 1,
-            "maxConcurrentTry": 4
-          },
           "tcpFastOpen": true,
           "tcpcongestion": "bbr",
           "tcpNoDelay": true,
@@ -186,27 +175,14 @@
       {
         "type": "field",
         "ip": [
-          "geoip:private",
-          "0.0.0.0/8",
           "10.0.0.0/8",
-          "100.64.0.0/10",
-          "127.0.0.0/8",
-          "169.254.0.0/16",
           "172.16.0.0/12",
-          "192.0.0.0/24",
-          "192.0.2.0/24",
           "192.168.0.0/16",
-          "198.18.0.0/15",
-          "198.51.100.0/24",
-          "203.0.113.0/24",
-          "224.0.0.0/4",
-          "240.0.0.0/4",
+          "169.254.0.0/16",
+          "127.0.0.0/8",
           "::1/128",
-          "100::/64",
-          "2001:db8::/32",
           "fc00::/7",
-          "fe80::/10",
-          "ff00::/8"
+          "fe80::/10"
         ],
         "outboundTag": "block"
       },
